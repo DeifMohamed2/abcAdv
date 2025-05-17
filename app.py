@@ -51,21 +51,25 @@ app = Flask(__name__)
 
 # Global variables to store the models and feature extractor
 LOADED_MODELS = {}
-FEATURE_EXTRACTOR = None
+FEATURE_EXTRACTORS = {}
 
-def load_feature_extractor():
+def load_feature_extractor(model_type):
     """
-    Load the feature extractor for the word model
+    Load the feature extractor for the specified model
     """
-    logger.info("Loading feature extractor")
+    if model_type not in MODELS:
+        logger.error(f"Unknown model type: {model_type}")
+        return None
+        
+    feature_extractor_name = MODELS[model_type]["feature_extractor_name"]
+    logger.info(f"Loading feature extractor for {model_type}: {feature_extractor_name}")
+    
     try:
-        feature_extractor = AutoFeatureExtractor.from_pretrained(
-            MODELS["word"]["feature_extractor_name"]
-        )
-        logger.info("Feature extractor loaded successfully")
+        feature_extractor = AutoFeatureExtractor.from_pretrained(feature_extractor_name)
+        logger.info(f"Feature extractor for {model_type} loaded successfully")
         return feature_extractor
     except Exception as e:
-        logger.error(f"Error loading feature extractor: {str(e)}")
+        logger.error(f"Error loading feature extractor for {model_type}: {str(e)}")
         logger.error(traceback.format_exc())
         return None
 
@@ -91,44 +95,45 @@ def load_model(model_type):
 
 def load_all_models():
     """
-    Load all models and the feature extractor
+    Load all models and their respective feature extractors
     """
     models = {}
+    feature_extractors = {}
+    
     for model_type in MODELS:
         models[model_type] = load_model(model_type)
+        
+        if MODELS[model_type]["requires_feature_extractor"]:
+            feature_extractors[model_type] = load_feature_extractor(model_type)
     
-    feature_extractor = None
-    if any(model_config["requires_feature_extractor"] for model_config in MODELS.values()):
-        feature_extractor = load_feature_extractor()
-    
-    return models, feature_extractor
+    return models, feature_extractors
 
-# Load models on startup
-LOADED_MODELS, FEATURE_EXTRACTOR = load_all_models()
+# Update the initialization
+LOADED_MODELS, FEATURE_EXTRACTORS = load_all_models()
 
-def process_audio_for_model(audio_data):
+def process_audio_for_model(audio_data, model_type):
     """
     Process audio data based on the model requirements
     """
-    if FEATURE_EXTRACTOR is not None:
-        # Apply feature extractor for word model
+    if model_type not in MODELS:
+        raise ValueError(f"Unknown model type: {model_type}")
+        
+    if FEATURE_EXTRACTORS.get(model_type) is not None:
         try:
-            # Convert to proper format for feature extractor (typically expects either a file path or waveform)
-            sample_rate = 16000  # Assuming 16kHz sample rate, adjust if different
-            inputs = FEATURE_EXTRACTOR(
+            sample_rate = 16000  # Assuming 16kHz sample rate
+            inputs = FEATURE_EXTRACTORS[model_type](
                 audio_data, 
                 sampling_rate=sample_rate, 
                 return_tensors="np"
             )
-            # Extract the processed features
             processed_audio = inputs.input_values[0]
             return processed_audio
         except Exception as e:
-            logger.error(f"Error processing audio with feature extractor: {str(e)}")
+            logger.error(f"Error processing audio with feature extractor for {model_type}: {str(e)}")
             logger.error(traceback.format_exc())
             raise
     else:
-        # For alpha model or if feature extractor failed to load
+        # If feature extractor failed to load
         return audio_data
 
 @app.route('/predict', methods=['POST'])
@@ -154,8 +159,8 @@ def predict():
         
         logger.info(f"Received audio data array of length {len(audio_data)} for model {model_type}")
         
-        # Process audio based on model requirements
-        processed_audio = process_audio_for_model(audio_data)
+        # Update this line to pass the model_type
+        processed_audio = process_audio_for_model(audio_data, model_type)
         
         # Make prediction with the selected model
         logger.info(f"Running inference on audio data with model {model_type}")
@@ -187,39 +192,50 @@ def predict():
             'traceback': traceback.format_exc()
         }), 500
 
+
 @app.route('/models', methods=['GET'])
 def list_models():
     """Endpoint to list available models and their status"""
     model_status = {}
     for model_type in MODELS:
         status = "loaded" if LOADED_MODELS.get(model_type) is not None else "failed to load"
+        
+        # Check feature extractor status for this specific model
+        feature_extractor_status = "not required"
+        if MODELS[model_type]["requires_feature_extractor"]:
+            feature_extractor_status = "loaded" if FEATURE_EXTRACTORS.get(model_type) is not None else "failed to load"
+        
         model_status[model_type] = {
             "status": status,
             "path": MODELS[model_type]["path"],
-            "labels_count": len(MODELS[model_type]["id2label"])
+            "labels_count": len(MODELS[model_type]["id2label"]),
+            "feature_extractor": {
+                "name": MODELS[model_type].get("feature_extractor_name"),
+                "status": feature_extractor_status
+            }
         }
     
-    feature_extractor_status = "loaded" if FEATURE_EXTRACTOR is not None else "failed to load"
-    
     return jsonify({
-        'models': model_status,
-        'feature_extractor': feature_extractor_status
+        'models': model_status
     })
+
 
 @app.route('/health', methods=['GET'])
 def health_check():
-    """Simple health check endpoint"""
     models_status = {
         model_type: "loaded" if model is not None else "failed to load"
         for model_type, model in LOADED_MODELS.items()
     }
     
-    feature_extractor_status = "loaded" if FEATURE_EXTRACTOR is not None else "failed to load"
+    feature_extractors_status = {
+        model_type: "loaded" if FEATURE_EXTRACTORS.get(model_type) is not None else "failed to load"
+        for model_type in MODELS if MODELS[model_type]["requires_feature_extractor"]
+    }
     
     return jsonify({
         'status': 'healthy', 
         'models': models_status,
-        'feature_extractor': feature_extractor_status
+        'feature_extractors': feature_extractors_status
     })
 
 def check_port_available(port, host='127.0.0.1'):
