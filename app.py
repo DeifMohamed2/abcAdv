@@ -106,11 +106,11 @@ def load_all_models():
 # Load models on startup
 LOADED_MODELS, FEATURE_EXTRACTOR = load_all_models()
 
-def process_audio_for_model(audio_data, model_type):
+def process_audio_for_model(audio_data):
     """
     Process audio data based on the model requirements
     """
-    if model_type == "word" and FEATURE_EXTRACTOR is not None:
+    if FEATURE_EXTRACTOR is not None:
         # Apply feature extractor for word model
         try:
             # Convert to proper format for feature extractor (typically expects either a file path or waveform)
@@ -155,7 +155,7 @@ def predict():
         logger.info(f"Received audio data array of length {len(audio_data)} for model {model_type}")
         
         # Process audio based on model requirements
-        processed_audio = process_audio_for_model(audio_data, model_type)
+        processed_audio = process_audio_for_model(audio_data)
         
         # Make prediction with the selected model
         logger.info(f"Running inference on audio data with model {model_type}")
