@@ -1,0 +1,2 @@
+my_model_alpha.onnx filter=lfs diff=lfs merge=lfs -text
+my_model_word.onnx filter=lfs diff=lfs merge=lfs -text
