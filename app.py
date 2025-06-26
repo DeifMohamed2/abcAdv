@@ -19,7 +19,7 @@ MODELS = {
     "alpha": {
         "path": "my_model_alpha.onnx",
         "requires_feature_extractor": True,
-        "feature_extractor_name": "mahmoudmamdouh13/ast-beta-finetuned-en-alphabets",
+        "feature_extractor_name": "mahmoudmamdouh13/ast-finetuned-en-alphabets",
         "id2label": {
             0: "A", 1: "B", 10: "K", 11: "L", 12: "M", 13: "N", 14: "O", 15: "P", 16: "Q",
             17: "R", 18: "S", 19: "T", 2: "C", 20: "U", 21: "V", 22: "W", 23: "X", 24: "Y",
@@ -27,33 +27,15 @@ MODELS = {
             8: "I", 9: "J"
         }
     },
-    "alpha_beta": {
-        "path": "my_model_alpha_beta.onnx",
-        "requires_feature_extractor": True,
-        "feature_extractor_name": "mahmoudmamdouh13/distilhubert-finetuned-en-alphabets",
-        "id2label": {
-            0: "A", 1: "B", 10: "K", 11: "L", 12: "M", 13: "N", 14: "O", 15: "P",
-           16: "Q", 17: "R", 18: "S", 19: "T", 2: "C", 20: "U", 21: "V",
-           22: "W", 23: "X", 24: "Y", 25: "Z", 26: "_silence_", 27: "_unknown_",
-           3: "D", 4: "E", 5: "F", 6: "G", 7: "H", 8: "I", 9: "J"
-        }
-    },
     "word": {
         "path": "my_model_word.onnx",
         "requires_feature_extractor": True,
         "feature_extractor_name": "mahmoudmamdouh13/ast-mlcommons-speech-commands",
         "id2label": {
-            0: "_silence_", 1: "_unknown_", 2: "air", 3: "apple", 4: "arm", 5: "ball", 6: "bear", 7: "bed", 
-            8: "box", 9: "cake", 10: "car", 11: "cat", 12: "doctor", 13: "dog", 14: "door", 15: "ear", 
-            16: "egg", 17: "elephant", 18: "fan", 19: "fish", 20: "fox", 21: "frog", 22: "game", 23: "gate", 
-            24: "gold", 25: "hand", 26: "hat", 27: "home", 28: "ice", 29: "ill", 30: "iron", 31: "jelly", 
-            32: "juice", 33: "jump", 34: "key", 35: "kid", 36: "kite", 37: "lamp", 38: "leaf", 39: "lion", 
-            40: "milk", 41: "monkey", 42: "moon", 43: "nest", 44: "net", 45: "nose", 46: "ocean", 47: "open", 
-            48: "orange", 49: "pen", 50: "pig", 51: "pizza", 52: "queen", 53: "question", 54: "quiet", 
-            55: "red", 56: "room", 57: "run", 58: "six", 59: "snake", 60: "star", 61: "sun", 62: "tiger", 
-            63: "toy", 64: "tree", 65: "umbrella", 66: "under", 67: "unlike", 68: "van", 69: "vest", 
-            70: "violin", 71: "water", 72: "white", 73: "window", 74: "year", 75: "yellow", 76: "youth", 
-            77: "zero", 78: "zone", 79: "zoo"
+            0: "_silence_", 1: "_unknown_", 10: "four", 11: "fox", 12: "green",
+            13: "horse", 14: "nine", 15: "one", 16: "red", 17: "seven", 18: "six",
+            19: "ten", 2: "black", 20: "three", 21: "two", 22: "white", 3: "blue",
+            4: "brown", 5: "cat", 6: "dog", 7: "eight", 8: "fish", 9: "five"
         }
     }
 }
